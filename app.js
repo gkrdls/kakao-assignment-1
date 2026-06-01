@@ -3,22 +3,50 @@ const todoInput = document.querySelector("#todo-input");
 const todoList = document.querySelector("#todo-list");
 const message = document.querySelector("#message");
 const emptyMessage = document.querySelector("#empty-message");
+const selectedDate = document.querySelector("#selected-date");
+const previousDateButton = document.querySelector("#previous-date-button");
+const nextDateButton = document.querySelector("#next-date-button");
 const filterTabs = document.querySelectorAll(".filter-tab");
 
 let todos = [];
 let currentFilter = "all";
+let currentDate = new Date();
 
-// 선택된 필터에 맞는 Todo만 골라 화면에 보여줄 배열을 만듭니다.
+// Date 객체를 Todo 저장과 비교에 사용하기 쉬운 YYYY-MM-DD 문자열로 바꿉니다.
+function formatDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+// 화면 상단에 현재 선택된 날짜를 사용자가 읽기 쉬운 형식으로 표시합니다.
+function updateSelectedDateText() {
+  const formattedDate = new Intl.DateTimeFormat("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  }).format(currentDate);
+
+  selectedDate.textContent = formattedDate;
+}
+
+// 선택된 날짜와 필터에 맞는 Todo만 골라 화면에 보여줄 배열을 만듭니다.
 function getFilteredTodos() {
+  const selectedDateKey = formatDateKey(currentDate);
+  const todosForSelectedDate = todos.filter((todo) => todo.date === selectedDateKey);
+
   if (currentFilter === "active") {
-    return todos.filter((todo) => !todo.isCompleted);
+    return todosForSelectedDate.filter((todo) => !todo.isCompleted);
   }
 
   if (currentFilter === "completed") {
-    return todos.filter((todo) => todo.isCompleted);
+    return todosForSelectedDate.filter((todo) => todo.isCompleted);
   }
 
-  return todos;
+  return todosForSelectedDate;
 }
 
 // 현재 Todo 배열과 필터 상태를 기준으로 화면의 목록을 다시 그립니다.
@@ -66,9 +94,9 @@ function updateFilterTabStyles() {
 // 필터 결과가 비어 있을 때 현재 상태에 맞는 안내 문구를 보여줍니다.
 function updateEmptyMessage(filteredTodoCount) {
   const emptyMessages = {
-    all: "아직 등록된 Todo가 없습니다.",
-    active: "진행 중인 Todo가 없습니다.",
-    completed: "완료된 Todo가 없습니다.",
+    all: "선택한 날짜에 등록된 Todo가 없습니다.",
+    active: "선택한 날짜에 진행 중인 Todo가 없습니다.",
+    completed: "선택한 날짜에 완료된 Todo가 없습니다.",
   };
 
   emptyMessage.textContent = emptyMessages[currentFilter];
@@ -95,6 +123,7 @@ function addTodo(text) {
   const newTodo = {
     id: Date.now(),
     text,
+    date: formatDateKey(currentDate),
     isCompleted: false,
   };
 
@@ -147,6 +176,13 @@ function deleteTodo(id) {
   renderTodos();
 }
 
+function moveDate(dayDifference) {
+  currentDate.setDate(currentDate.getDate() + dayDifference);
+  currentDate = new Date(currentDate);
+  updateSelectedDateText();
+  renderTodos();
+}
+
 todoForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
@@ -164,6 +200,14 @@ todoForm.addEventListener("submit", (event) => {
   todoInput.focus();
 });
 
+previousDateButton.addEventListener("click", () => {
+  moveDate(-1);
+});
+
+nextDateButton.addEventListener("click", () => {
+  moveDate(1);
+});
+
 filterTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
     currentFilter = tab.dataset.filter;
@@ -172,5 +216,6 @@ filterTabs.forEach((tab) => {
   });
 });
 
+updateSelectedDateText();
 updateFilterTabStyles();
 renderTodos();

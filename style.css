@@ -55,6 +55,43 @@ h1 {
   line-height: 1.2;
 }
 
+.date-navigator {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px;
+  border: 1px solid #e5def6;
+  border-radius: 8px;
+  background: #fbfaff;
+}
+
+.selected-date {
+  margin: 0;
+  color: #2d2540;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.date-button {
+  min-width: 64px;
+  min-height: 40px;
+  border: 1px solid #d8d0ed;
+  border-radius: 8px;
+  color: #672be0;
+  font-weight: 700;
+  background: #ffffff;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.date-button:hover {
+  border-color: #672be0;
+  color: #ffffff;
+  background: #672be0;
+}
+
 .todo-form {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -225,8 +262,13 @@ h1 {
   }
 
   .todo-form,
+  .date-navigator,
   .todo-item {
     grid-template-columns: 1fr;
+  }
+
+  .selected-date {
+    order: -1;
   }
 
   .add-button {
