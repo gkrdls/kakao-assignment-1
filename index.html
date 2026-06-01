@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="todo-app">
+    <section class="todo-panel" aria-labelledby="app-title">
+      <div class="todo-header">
+        <p class="eyebrow">Today</p>
+        <h1 id="app-title">오늘의 Todo</h1>
+      </div>
+
+      <form class="todo-form" id="todo-form">
+        <label class="sr-only" for="todo-input">Todo 입력</label>
+        <input
+          type="text"
+          id="todo-input"
+          class="todo-input"
+          placeholder="할 일을 입력하세요"
+          autocomplete="off"
+        >
+        <button type="submit" class="add-button">추가</button>
+      </form>
+
+      <p class="message" id="message" role="alert" aria-live="polite"></p>
+
+      <div class="filter-tabs" role="tablist" aria-label="Todo 상태 필터">
+        <button type="button" class="filter-tab active" data-filter="all" role="tab" aria-selected="true">전체</button>
+        <button type="button" class="filter-tab" data-filter="active" role="tab" aria-selected="false">진행 중</button>
+        <button type="button" class="filter-tab" data-filter="completed" role="tab" aria-selected="false">완료</button>
+      </div>
+
+      <p class="empty-message" id="empty-message"></p>
+      <ul class="todo-list" id="todo-list" aria-label="Todo 목록"></ul>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
