@@ -6,15 +6,17 @@ const emptyMessage = document.querySelector("#empty-message");
 const selectedDate = document.querySelector("#selected-date");
 const previousDateButton = document.querySelector("#previous-date-button");
 const nextDateButton = document.querySelector("#next-date-button");
+const todayDateButton = document.querySelector("#today-date-button");
+const weekView = document.querySelector("#week-view");
 const filterTabs = document.querySelectorAll(".filter-tab");
 
 const TODO_STORAGE_KEY = "dailyTodos";
+const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 let todos = [];
 let currentFilter = "all";
 let currentDate = new Date();
 
-// localStorage에 저장된 Todo JSON 문자열을 배열로 변환해 불러옵니다.
 function loadTodosFromStorage() {
   const savedTodos = localStorage.getItem(TODO_STORAGE_KEY);
 
@@ -22,15 +24,18 @@ function loadTodosFromStorage() {
     return [];
   }
 
-  return JSON.parse(savedTodos);
+  try {
+    const parsedTodos = JSON.parse(savedTodos);
+    return Array.isArray(parsedTodos) ? parsedTodos : [];
+  } catch {
+    return [];
+  }
 }
 
-// 현재 Todo 배열을 JSON 문자열로 변환해 localStorage에 저장합니다.
 function saveTodosToStorage() {
   localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(todos));
 }
 
-// Date 객체를 Todo 저장과 비교에 사용하기 쉬운 YYYY-MM-DD 문자열로 바꿉니다.
 function formatDateKey(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -39,19 +44,68 @@ function formatDateKey(date) {
   return `${year}-${month}-${day}`;
 }
 
-// 화면 상단에 현재 선택된 날짜를 사용자가 읽기 쉬운 형식으로 표시합니다.
+function getStartOfWeek(date) {
+  const startOfWeek = new Date(date);
+  const day = startOfWeek.getDay();
+  const daysFromMonday = day === 0 ? 6 : day - 1;
+
+  startOfWeek.setDate(startOfWeek.getDate() - daysFromMonday);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  return startOfWeek;
+}
+
+function getTodoCountByDate(date) {
+  const dateKey = formatDateKey(date);
+  return todos.filter((todo) => todo.date === dateKey).length;
+}
+
 function updateSelectedDateText() {
-  const formattedDate = new Intl.DateTimeFormat("ko-KR", {
+  selectedDate.textContent = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
     weekday: "short",
   }).format(currentDate);
-
-  selectedDate.textContent = formattedDate;
 }
 
-// 선택된 날짜와 필터에 맞는 Todo만 골라 화면에 보여줄 배열을 만듭니다.
+function renderWeekView() {
+  const startOfWeek = getStartOfWeek(currentDate);
+  const selectedDateKey = formatDateKey(currentDate);
+  const todayKey = formatDateKey(new Date());
+
+  weekView.innerHTML = "";
+
+  WEEK_DAYS.forEach((dayName, index) => {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + index);
+
+    const dateKey = formatDateKey(date);
+    const button = document.createElement("button");
+    const todoCount = getTodoCountByDate(date);
+
+    button.type = "button";
+    button.className = "week-day";
+    button.classList.toggle("selected", dateKey === selectedDateKey);
+    button.classList.toggle("today", dateKey === todayKey);
+    button.setAttribute("aria-pressed", String(dateKey === selectedDateKey));
+    button.innerHTML = `
+      <span class="week-day-name">${dayName}</span>
+      <span class="week-day-date">${date.getDate()}</span>
+      <span class="week-day-count">${todoCount}</span>
+    `;
+
+    button.addEventListener("click", () => {
+      currentDate = date;
+      updateSelectedDateText();
+      renderWeekView();
+      renderTodos();
+    });
+
+    weekView.append(button);
+  });
+}
+
 function getFilteredTodos() {
   const selectedDateKey = formatDateKey(currentDate);
   const todosForSelectedDate = todos.filter((todo) => todo.date === selectedDateKey);
@@ -67,12 +121,10 @@ function getFilteredTodos() {
   return todosForSelectedDate;
 }
 
-// 현재 Todo 배열과 필터 상태를 기준으로 화면의 목록을 다시 그립니다.
 function renderTodos() {
-  todoList.innerHTML = "";
-
   const filteredTodos = getFilteredTodos();
 
+  todoList.innerHTML = "";
   updateEmptyMessage(filteredTodos.length);
 
   filteredTodos.forEach((todo) => {
@@ -85,22 +137,19 @@ function renderTodos() {
 
     const actions = document.createElement("div");
     actions.className = "todo-actions";
-
-    const editButton = createActionButton("수정", "edit-button", () => editTodo(todo.id));
-    const completeButton = createActionButton(
-      todo.isCompleted ? "취소" : "완료",
-      "complete-button",
-      () => toggleTodoComplete(todo.id)
+    actions.append(
+      createActionButton("Edit", "edit-button", () => editTodo(todo.id)),
+      createActionButton(todo.isCompleted ? "Undo" : "Done", "complete-button", () =>
+        toggleTodoComplete(todo.id)
+      ),
+      createActionButton("Delete", "delete-button", () => deleteTodo(todo.id))
     );
-    const deleteButton = createActionButton("삭제", "delete-button", () => deleteTodo(todo.id));
 
-    actions.append(editButton, completeButton, deleteButton);
     todoItem.append(todoText, actions);
     todoList.append(todoItem);
   });
 }
 
-// 현재 선택된 필터 탭에 active 클래스를 적용해 시각적으로 구분합니다.
 function updateFilterTabStyles() {
   filterTabs.forEach((tab) => {
     const isSelectedTab = tab.dataset.filter === currentFilter;
@@ -109,19 +158,17 @@ function updateFilterTabStyles() {
   });
 }
 
-// 필터 결과가 비어 있을 때 현재 상태에 맞는 안내 문구를 보여줍니다.
 function updateEmptyMessage(filteredTodoCount) {
   const emptyMessages = {
-    all: "선택한 날짜에 등록된 Todo가 없습니다.",
-    active: "선택한 날짜에 진행 중인 Todo가 없습니다.",
-    completed: "선택한 날짜에 완료된 Todo가 없습니다.",
+    all: "No todos for the selected date.",
+    active: "No active todos for the selected date.",
+    completed: "No completed todos for the selected date.",
   };
 
   emptyMessage.textContent = emptyMessages[currentFilter];
   emptyMessage.classList.toggle("visible", filteredTodoCount === 0);
 }
 
-// 버튼 생성 로직을 한곳에 모아 각 Todo 항목의 동작 버튼을 만듭니다.
 function createActionButton(text, className, clickHandler) {
   const button = document.createElement("button");
   button.type = "button";
@@ -132,21 +179,20 @@ function createActionButton(text, className, clickHandler) {
   return button;
 }
 
-// 안내 메시지를 표시하고, 필요할 때 빈 문자열로 지웁니다.
 function showMessage(text) {
   message.textContent = text;
 }
 
 function addTodo(text) {
-  const newTodo = {
-    id: Date.now(),
+  todos.push({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     text,
     date: formatDateKey(currentDate),
     isCompleted: false,
-  };
+  });
 
-  todos.push(newTodo);
   saveTodosToStorage();
+  renderWeekView();
   renderTodos();
 }
 
@@ -157,7 +203,7 @@ function editTodo(id) {
     return;
   }
 
-  const editedText = window.prompt("수정할 내용을 입력하세요.", todoToEdit.text);
+  const editedText = window.prompt("Edit todo", todoToEdit.text);
 
   if (editedText === null) {
     return;
@@ -166,42 +212,51 @@ function editTodo(id) {
   const trimmedText = editedText.trim();
 
   if (trimmedText === "") {
-    showMessage("수정할 Todo 내용을 입력해 주세요.");
+    showMessage("Please enter todo text.");
     return;
   }
 
   todoToEdit.text = trimmedText;
   showMessage("");
   saveTodosToStorage();
+  renderWeekView();
   renderTodos();
 }
 
 function toggleTodoComplete(id) {
-  todos = todos.map((todo) => {
-    if (todo.id !== id) {
-      return todo;
-    }
-
-    return {
-      ...todo,
-      isCompleted: !todo.isCompleted,
-    };
-  });
+  todos = todos.map((todo) =>
+    todo.id === id
+      ? {
+          ...todo,
+          isCompleted: !todo.isCompleted,
+        }
+      : todo
+  );
 
   saveTodosToStorage();
+  renderWeekView();
   renderTodos();
 }
 
 function deleteTodo(id) {
   todos = todos.filter((todo) => todo.id !== id);
   saveTodosToStorage();
+  renderWeekView();
   renderTodos();
 }
 
-function moveDate(dayDifference) {
-  currentDate.setDate(currentDate.getDate() + dayDifference);
+function moveWeek(weekDifference) {
+  currentDate.setDate(currentDate.getDate() + weekDifference * 7);
   currentDate = new Date(currentDate);
   updateSelectedDateText();
+  renderWeekView();
+  renderTodos();
+}
+
+function moveToToday() {
+  currentDate = new Date();
+  updateSelectedDateText();
+  renderWeekView();
   renderTodos();
 }
 
@@ -211,7 +266,7 @@ todoForm.addEventListener("submit", (event) => {
   const todoText = todoInput.value.trim();
 
   if (todoText === "") {
-    showMessage("Todo 내용을 입력해 주세요.");
+    showMessage("Please enter todo text.");
     todoInput.focus();
     return;
   }
@@ -223,11 +278,15 @@ todoForm.addEventListener("submit", (event) => {
 });
 
 previousDateButton.addEventListener("click", () => {
-  moveDate(-1);
+  moveWeek(-1);
 });
 
 nextDateButton.addEventListener("click", () => {
-  moveDate(1);
+  moveWeek(1);
+});
+
+todayDateButton.addEventListener("click", () => {
+  moveToToday();
 });
 
 filterTabs.forEach((tab) => {
@@ -240,5 +299,6 @@ filterTabs.forEach((tab) => {
 
 todos = loadTodosFromStorage();
 updateSelectedDateText();
+renderWeekView();
 updateFilterTabStyles();
 renderTodos();

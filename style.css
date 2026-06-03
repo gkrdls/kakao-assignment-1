@@ -57,7 +57,7 @@ h1 {
 
 .date-navigator {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 12px;
   margin-bottom: 20px;
@@ -90,6 +90,69 @@ h1 {
   border-color: #672be0;
   color: #ffffff;
   background: #672be0;
+}
+
+.today-date-button {
+  color: #c62828;
+}
+
+.today-date-button:hover {
+  border-color: #c62828;
+  background: #c62828;
+}
+
+.week-view {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.week-day {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  min-height: 78px;
+  padding: 10px 6px;
+  border: 1px solid #e5def6;
+  border-radius: 8px;
+  color: #4b3d70;
+  background: #ffffff;
+  text-align: center;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.week-day:hover {
+  border-color: #672be0;
+  color: #672be0;
+  background: #fbfaff;
+}
+
+.week-day.selected {
+  border-color: #672be0;
+  color: #ffffff;
+  background: #672be0;
+}
+
+.week-day.today {
+  border-color: #c62828;
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.12);
+}
+
+.week-day.selected.today {
+  border-color: #c62828;
+}
+
+.week-day-name,
+.week-day-count {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.week-day-date {
+  font-size: 20px;
+  font-weight: 700;
 }
 
 .todo-form {
@@ -277,6 +340,10 @@ h1 {
 
   .filter-tabs {
     grid-template-columns: 1fr;
+  }
+
+  .week-view {
+    grid-template-columns: repeat(7, minmax(68px, 1fr));
   }
 
   .todo-actions {
