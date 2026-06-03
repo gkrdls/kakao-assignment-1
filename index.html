@@ -15,10 +15,10 @@
       </div>
 
       <div class="date-navigator" aria-label="Todo week selection">
-        <button type="button" class="date-button" id="previous-date-button" aria-label="Previous week">Prev Week</button>
+        <button type="button" class="date-button" id="previous-date-button" aria-label="Previous week">저번 주</button>
         <p class="selected-date" id="selected-date" aria-live="polite"></p>
-        <button type="button" class="date-button today-date-button" id="today-date-button" aria-label="Today">Today</button>
-        <button type="button" class="date-button" id="next-date-button" aria-label="Next week">Next Week</button>
+        <button type="button" class="date-button today-date-button" id="today-date-button" aria-label="Today">오늘</button>
+        <button type="button" class="date-button" id="next-date-button" aria-label="Next week">다음 주</button>
       </div>
 
       <div class="week-view" id="week-view" aria-label="This week todos"></div>
@@ -32,15 +32,15 @@
           placeholder="Enter a todo"
           autocomplete="off"
         >
-        <button type="submit" class="add-button">Add</button>
+        <button type="submit" class="add-button">추가</button>
       </form>
 
       <p class="message" id="message" role="alert" aria-live="polite"></p>
 
       <div class="filter-tabs" role="tablist" aria-label="Todo status filter">
-        <button type="button" class="filter-tab active" data-filter="all" role="tab" aria-selected="true">All</button>
-        <button type="button" class="filter-tab" data-filter="active" role="tab" aria-selected="false">Active</button>
-        <button type="button" class="filter-tab" data-filter="completed" role="tab" aria-selected="false">Completed</button>
+        <button type="button" class="filter-tab active" data-filter="all" role="tab" aria-selected="true">전체</button>
+        <button type="button" class="filter-tab" data-filter="active" role="tab" aria-selected="false">진행중</button>
+        <button type="button" class="filter-tab" data-filter="completed" role="tab" aria-selected="false">완료</button>
       </div>
 
       <p class="empty-message" id="empty-message"></p>
