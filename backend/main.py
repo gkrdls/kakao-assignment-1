@@ -4,9 +4,12 @@ from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
+from dotenv import load_dotenv
+import os
 
 # DB 설정
-DATABASE_URL = "sqlite:///./todos.db"
+load_dotenv(".env.local")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./todos.db")
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -17,20 +20,24 @@ class Todo(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     completed = Column(Boolean, default=False)
+    date = Column(String, nullable=False)
 
 # Pydantic 스키마 (요청/응답 데이터 구조 정의)
 class TodoCreate(BaseModel):
     title: str
     completed: bool = False
+    date: str
 
 class TodoUpdate(BaseModel):
     title: str
     completed: bool = False
+    date: str
 
 class TodoResponse(BaseModel):
     id: int
     title: str
     completed: bool = False
+    date: str
 
     class Config:
         from_attributes = True
@@ -61,8 +68,13 @@ def get_db():
 
 # 엔드포인트 구현
 @app.get("/todos", response_model=list[TodoResponse])
-def get_todos(db: Session = Depends(get_db)):
-    todos = db.query(Todo).all()
+def get_todos(date: str | None = None, db: Session = Depends(get_db)):
+    query = db.query(Todo)
+
+    if date is not None:
+        query = query.filter(Todo.date == date)
+
+    todos = query.all()
     return todos
 
 @app.post("/todos", response_model=TodoResponse)
@@ -70,6 +82,7 @@ def create_todo(todo: TodoCreate, db: Session = Depends(get_db)):
     new_todo = Todo(
         title=todo.title,
         completed=todo.completed,
+        date=todo.date,
     )
 
     db.add(new_todo)
@@ -91,6 +104,7 @@ def update_todo(
 
     db_todo.title = todo.title
     db_todo.completed = todo.completed
+    db_todo.date = todo.date
 
     db.commit()
     db.refresh(db_todo)
